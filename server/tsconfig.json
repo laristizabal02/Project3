@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*", "express.d.ts"], // Make sure to include all files in the src directory
+  "typeRoots": ["./node_modules/@types", "./src/types"]
+}

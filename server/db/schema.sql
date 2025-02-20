@@ -1,0 +1,5 @@
+-- DROP DATABASE
+DROP DATABASE IF EXISTS course_registration;
+
+-- CREATE DATABASE
+CREATE DATABASE course_registration;
