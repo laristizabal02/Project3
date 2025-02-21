@@ -1,4 +1,4 @@
-import User from './user.js';
+import User from './User.js';
 import Role_type from './role_type.js';
 // Define the one-to-many relationship
 User.belongsTo(Role_type, {

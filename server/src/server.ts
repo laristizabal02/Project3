@@ -9,7 +9,7 @@ import cors from 'cors';
 import './models/index.js';
 import './models/role_type.js';
 import './models/person.js';
-import './models/user.js';
+import './models/User.js';
 import './models/student.js';
 import './models/associations.js';
 
