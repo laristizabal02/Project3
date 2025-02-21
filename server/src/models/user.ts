@@ -1,93 +1,50 @@
-import { DataTypes, type Sequelize, Model, type Optional } from 'sequelize';
+// Require schema and model from mongoose
+import { Schema, model, Document } from 'mongoose';
 import bcrypt from 'bcrypt';
 
-interface UserAttributes {
-  user_id: number;
-  username: string;
-  password: string;
+
+interface IUser extends Document {
+  name: string;
   email: string;
-  role_type_id: number;
-  //person_id: number;
-}
+  password: string;
+  createdAt: Date;
+ }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'user_id'> { }
-
-export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
-  public user_id!: number;
-  public username!: string;
-  public password!: string;
-  public email!: string;
-  public role_type_id!: number; // Use definite assignment assertion
-  //public person_id!: number; // Use definite assignment assertion
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-
-  constructor(init?: UserCreationAttributes) {
-    super(init); // Use UserCreationAttributes type
-    if (init) {
-      this.role_type_id = init.role_type_id || 0; // Default value if not provided
-      //this.person_id = init.person_id || 0; // Default value if not provided
-    }
-  }
-
-  // Hash the password before saving the user
-  public async setPassword(password: string) {
-    const saltRounds = 10;
-    this.password = await bcrypt.hash(password, saltRounds);
-  }
-}
-
-export function UserFactory(sequelize: Sequelize): typeof User {
-  User.init(
-    {
-      user_id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
+// Construct a new instance of the schema class
+const userSchema = new Schema<IUser>({
+  // Configure individual properties using Schema Types
+name: { type: String, required: true, trim: true },
+  email: {
+    type: String, required: true, unique: true, lowercase: true,
+    validate: {
+      validator: function (value) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
       },
-      username: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      email: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      password: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      role_type_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'role_types', // name of the target model
-          key: 'role_type_id', // key in the target model that you're referencing
-        },
-      },
-      /* person_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'persons', // name of the target model
-          key: 'person_id', // key in the target model that you're referencing
-        },
-      }, */
+      message: 'Invalid email address format',
     },
-    {
-      tableName: 'users',
-      sequelize,
-      hooks: {
-        beforeCreate: async (user: User) => {
-          await user.setPassword(user.password);
-        },
-        beforeUpdate: async (user: User) => {
-          await user.setPassword(user.password);
-        },
-      }
-    }
-  );
+  },
+  password: {type: String, required: true, minlength: 8},
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+})
+userSchema.pre('save', async function(next) {
+  try {
+    // Check if the password has been modified
+    if (!this.isModified('password')) return next();
+    
+    // Generate a salt and hash the password
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    
+    next(); // Proceed to save
+  } catch (error: unknown) {
+    next(error as Error); // Pass any errors to the next middleware
+  }
+});
+// Using model() to compile a model based on the schema 'userSchema'
+const User = model('user', userSchema);
 
-  return User;
-}
 export default User;
+
