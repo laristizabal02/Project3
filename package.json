@@ -25,6 +25,8 @@
     "wait-on": "^7.2.0"
   },
   "dependencies": {
-    "cors": "^2.8.5"
+    "@apollo/client": "^3.13.1",
+    "cors": "^2.8.5",
+    "graphql": "^16.10.0"
   }
 }
