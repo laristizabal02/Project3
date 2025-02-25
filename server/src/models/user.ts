@@ -7,7 +7,10 @@ interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  address: string;
+  contactNumber: string;
   createdAt: Date;
+  roleTypeId: Schema.Types.ObjectId;
  }
 
 // Construct a new instance of the schema class
@@ -24,10 +27,15 @@ name: { type: String, required: true, trim: true },
     },
   },
   password: {type: String, required: true, minlength: 8},
+  address: {type: String, required: true},
+  contactNumber: {type: String, required: false},
   createdAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  roleTypeId: {
+    type: Schema.Types.ObjectId,
+    required: true}
 })
 userSchema.pre('save', async function(next) {
   try {
