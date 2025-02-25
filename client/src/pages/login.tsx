@@ -1,12 +1,9 @@
 import { Form, Button } from 'react-bootstrap';
 import { useState, FormEvent, ChangeEvent } from "react";
-import { login } from "../api/authAPI";  // Import the login function from the API
+import { useMutation } from '@apollo/client';
+import { LOGIN_USER } from "../utils/mutation";  // Import the mutation
 import { UserLogin } from "../interfaces/UserLogin";
 import { useNavigate } from "react-router-dom";
-
-
-//import { Prev } from 'react-bootstrap/esm/PageItem';
-
 
 const Login: React.FC = () => {
   const [role_type_id, setRole] = useState<'instructor' | 'parent' | null>('instructor');
@@ -15,7 +12,11 @@ const Login: React.FC = () => {
     password: '',
     role_type_id: 'instructor' // Default role
   });
+
+  // Use the login mutation hook
+  const [loginUser, { loading, error }] = useMutation(LOGIN_USER);  
   let navigate = useNavigate();
+
   // Handle input changes for the login form
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -34,24 +35,28 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
   
-    const roleNumber = role_type_id === 'instructor' ? 1 : 2;
-  
     try {
-      const updatedLoginData = {
-        ...loginData,
-        role_type_id: roleNumber.toString(),
-      };
+      // Execute the mutation using the username (email) and password
+      const { data } = await loginUser({
+        variables: {
+          email: loginData.username, // Assuming username is an email
+          password: loginData.password,
+        },
+      });
   
-      const roleTypeId = await login(updatedLoginData);
+      // If login is successful, check the returned data
+      if (data.loginUser) {
+        const roleTypeId = parseInt(data.loginUser.user.role_type_id, 10);
   
-      // Display a success alert
-      alert('Login successful! Redirecting to your dashboard...');
+        // Display a success alert
+        alert('Login successful! Redirecting to your dashboard...');
   
-      // Redirect based on roleTypeId
-      if (roleTypeId === 1) {
-        navigate('/instructor');
-      } else if (roleTypeId === 2) {
-        navigate('/parent');
+        // Redirect based on roleTypeId
+        if (roleTypeId === 1) {
+          navigate('/instructor');
+        } else if (roleTypeId === 2) {
+          navigate('/parent');
+        }
       }
     } catch (err) {
       console.error('Failed to login', err);
@@ -101,9 +106,10 @@ const Login: React.FC = () => {
             onChange={handleChange}
           />
         </Form.Group>
-        <Button variant="primary" type="submit">
+        <Button variant="primary" type="submit" disabled={loading}>
           Login
         </Button>
+        {error && <p className="text-danger">Failed to login. Please check your credentials.</p>}
       </Form>
     </div>
   );
